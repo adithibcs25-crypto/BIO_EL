@@ -29,45 +29,93 @@ The NSL-KDD dataset contains 41 traffic attributes, 1 attack label, and 1 diffic
 - **Leakage Prevention**: All encoder categories and normalization parameters $(\min, \max)$ are fitted strictly on the training partition. The test partition is purely transformed.
 
 ### 2.2 Phase 1: Negative Selection Algorithm (NSA)
+
 The goal of negative selection is to generate a mature detector repertoire $D \subset [0, 1]^D$ that covers the Non-Self anomaly space without overlapping normal Self traffic $S$:
 
 1. Propose candidate detector $c \in [0, 1]^D$.
 2. Calculate the minimum squared Euclidean distance to all Self samples in the training set:
-   $$d_{min}^2(c) = \min_{s \in S} \|c - s\|_2^2$$
-3. **Censoring Rule**:
-   $$\text{Accept } c \iff d_{min}^2(c) > r_{self}^2$$
-   If $d_{min}^2(c) \le r_{self}^2$, candidate $c$ matches Self and is immediately eliminated.
-4. **Computational Vectorization**:
-   To avoid prohibitive pairwise distance loops on CPU hardware, squared distances are computed using matrix operations:
-   $$\|c - s\|^2 = \|c\|^2 + \|s\|^2 - 2 \cdot (c \cdot s^T)$$
-   computed in block-matrix chunks via BLAS GEMM.
+
+$$
+d_{\min}^2(c) = \min_{s \in S} \|c - s\|_2^2
+$$
+
+3. **Censoring Rule**: Accept candidate $c$ if and only if it falls strictly outside the Self matching radius:
+
+$$
+\text{Accept } c \iff d_{\min}^2(c) > r_{\text{self}}^2
+$$
+
+If $d_{\min}^2(c) \le r_{\text{self}}^2$, candidate $c$ matches Self and is immediately eliminated to preserve self-tolerance.
+
+4. **Computational Vectorization**: To avoid prohibitive pairwise distance loops on CPU hardware, squared Euclidean distances are computed using matrix operations:
+
+$$
+\|c - s\|^2 = \|c\|^2 + \|s\|^2 - 2 \cdot (c \cdot s^T)
+$$
+
+evaluated in block-matrix chunks via BLAS GEMM.
 
 ### 2.3 Phase 2: Clonal Selection Algorithm (CSA)
-Initial detectors from Negative Selection are evolved across $G$ generations using an internal validation split $(X_{val}, y_{val})$:
 
-1. **Affinity Metric**:
-   For each detector $d_i$, test all validation samples within matching radius $r$:
-   $$\text{Affinity}(d_i) = \max\left(0.0001, \text{TPR}_i - \lambda \cdot \text{FPR}_i\right)$$
-   where $\text{TPR}_i = \frac{TP_i}{N_{attack}}$ is the true positive rate, $\text{FPR}_i = \frac{FP_i}{N_{normal}}$ is the false alarm rate, and $\lambda$ (default 3.0) heavily penalizes false positives.
-2. **Clonal Expansion**:
-   Detectors are ranked by affinity. The top fraction ($\alpha = 0.50$) generate a proportional number of clones:
-   $$N_{clones}(i) = \max\left(1, \text{round}\left(C_{max} \cdot \frac{N_{select} - i + 1}{N_{select}}\right)\right)$$
-3. **Somatic Hypermutation**:
-   Clones mutate inversely proportional to detector affinity:
-   $$\sigma_i = \sigma_{base} \cdot \left(1.0 - \frac{\text{Affinity}(i)}{\max(\text{Affinities})} + 0.1\right)$$
-   $$c' = \text{clip}\left(c + \mathcal{N}(0, \sigma_i^2), 0.0, 1.0\right)$$
-4. **Self-Tolerance Filtering**:
-   Mutated clones are checked against Self reference data:
-   $$\text{Retain } c' \iff \min_{s \in S} \|c' - s\|_2 > r_{self}$$
-   Mutated clones that drift into Self space are discarded.
-5. **Repertoire Selection**:
-   The highest-affinity original detectors and mutated clones are pooled, and the top $K$ detectors are retained for the next generation.
+Initial detectors from Negative Selection are evolved across $G$ generations using an internal validation split $(X_{\text{val}}, y_{\text{val}})$:
+
+#### 1. Affinity Metric
+For each detector $d_i$, test all validation samples within matching radius $r$:
+
+$$
+\text{Affinity}(d_i) = \max\left(0.0001, \, \text{TPR}_i - \lambda \cdot \text{FPR}_i\right)
+$$
+
+where:
+- $\text{TPR}_i = \frac{\text{TP}_i}{N_{\text{attack}}}$ is the True Positive Rate (Attack Detection Rate).
+- $\text{FPR}_i = \frac{\text{FP}_i}{N_{\text{normal}}}$ is the False Positive Rate (False Alarm Rate).
+- $\lambda = 3.0$ is the penalty coefficient that heavily penalizes false alarms.
+
+#### 2. Clonal Expansion
+Detectors are ranked in descending order of affinity. The top fraction ($\alpha = 0.50$) generate a proportional number of clones:
+
+$$
+N_{\text{clones}}(i) = \max\left(1, \, \text{round}\left(C_{\max} \cdot \frac{N_{\text{select}} - i + 1}{N_{\text{select}}}\right)\right)
+$$
+
+#### 3. Somatic Hypermutation
+Clones undergo stochastic mutation with perturbation variance inversely proportional to detector affinity:
+
+$$
+\sigma_i = \sigma_{\text{base}} \cdot \left(1.0 - \frac{\text{Affinity}(i)}{\max(\text{Affinities})} + 0.1\right)
+$$
+
+$$
+c' = \text{clip}\left(c + \mathcal{N}(0, \, \sigma_i^2), \, 0.0, \, 1.0\right)
+$$
+
+#### 4. Self-Tolerance Filtering
+Every mutated clone is checked against the Self reference profile. Any clone that invades Self space is censored and discarded:
+
+$$
+\text{Retain } c' \iff \min_{s \in S} \|c' - s\|_2 > r_{\text{self}}
+$$
+
+#### 5. Repertoire Selection
+The highest-affinity original detectors and surviving mutated clones are pooled. The top $K$ detectors are retained for the subsequent generation.
 
 ### 2.4 Classification Decision Function
-Given an unseen connection $x \in [0, 1]^D$:
-$$\hat{y} = \begin{cases} 1 & \text{if } \min_{d \in D^*} \|x - d\|_2 \le r \\ 0 & \text{otherwise} \end{cases}$$
+
+Given an unseen connection vector $x \in [0, 1]^D$:
+
+$$
+\hat{y} = 
+\begin{cases} 
+1 & \text{if } \min_{d \in D^*} \|x - d\|_2 \le r \\
+0 & \text{otherwise} 
+\end{cases}
+$$
+
 The continuous Anomaly Affinity Score is defined as:
-$$S(x) = \exp\left(-\frac{\min_{d \in D^*} \|x - d\|_2^2}{2 \cdot r^2}\right) \in [0, 1]$$
+
+$$
+S(x) = \exp\left(-\frac{\min_{d \in D^*} \|x - d\|_2^2}{2 \cdot r^2}\right) \in [0, 1]
+$$
 
 ---
 
@@ -108,11 +156,11 @@ Recall (Detection Rate)   | 0.0735             | 0.6203
 Specificity (TNR)         | 1.0000             | 0.9699            
 F1-Score                  | 0.1369             | 0.7550            
 False Positive Rate (FPR) | 0.0000             | 0.0301            
-Matthews Corr (MCC)       | 0.2045             | 0.5841            
+Matthews Corr (MCC)       | 0.1819             | 0.6068            
 ROC AUC                   | 0.7001             | 0.9555            
-Training Time (s)         | 3.48               | 0.29              
-Prediction Latency (s)    | 0.01               | 0.04              
-Throughput (samples/s)    | 653,757.1          | 118,868.5         
+Training Time (s)         | 8.77               | 0.96              
+Prediction Latency (s)    | 0.03               | 0.07              
+Throughput (samples/s)    | 162,306.6          | 76,438.1          
 ===========================================================================
 ```
 
