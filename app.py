@@ -51,23 +51,25 @@ st.set_page_config(
     page_title="AIS Network Intrusion Detection Benchmark",
     page_icon=str(FAVICON_PATH) if FAVICON_PATH.exists() else None,
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # High-contrast dark institutional stylesheet (Pure black background, white text)
 st.markdown("""
 <style>
-    /* Hide Streamlit brand and footer */
+    /* Hide Streamlit brand, footer, and sidebar toggle */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    [data-testid="collapsedControl"] {display: none;}
+    section[data-testid="stSidebar"] {display: none;}
 
     /* Force dark background and white text across all elements */
     .stApp {
         background-color: #000000 !important;
         color: #ffffff !important;
     }
-    
+
     body, p, span, label, div {
         color: #ffffff !important;
     }
@@ -156,7 +158,7 @@ st.markdown("""
         font-size: 0.85rem;
         display: inline-block;
     }
-    
+
     /* Tables styling */
     table {
         color: #ffffff !important;
@@ -171,6 +173,24 @@ st.markdown("""
         background-color: #0f172a !important;
         color: #f8fafc !important;
         border: 1px solid #1e293b !important;
+    }
+
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: #0b0f19 !important;
+        border-bottom: 1px solid #334155;
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #94a3b8 !important;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #ffffff !important;
+        border-bottom: 2px solid #38bdf8 !important;
+    }
+    .stTabs [data-baseweb="tab-panel"] {
+        background-color: #000000 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -211,46 +231,36 @@ def get_evaluation_metrics():
 preprocessor, ais_model, rf_model = load_models()
 metrics_data = get_evaluation_metrics()
 
-# Sidebar Navigation
-st.sidebar.markdown("### System Navigation")
-selected_page = st.sidebar.radio(
-    "Select View:",
-    [
-        "Experimental Benchmarks",
-        "Single-Packet Inspection",
-        "Dataset Specification",
-        "Algorithm Training Studio",
-        "Research Paper Table Exporter",
-        "Terms of Use & Privacy Policy",
-        "Deployment & Custom Domain",
-    ]
-)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**System State**")
-st.sidebar.text(f"Preprocessor: {'Loaded' if preprocessor else 'Unfitted'}")
-st.sidebar.text(f"Hybrid AIS:   {'Loaded' if ais_model else 'Unfitted'}")
-st.sidebar.text(f"Random Forest: {'Loaded' if rf_model else 'Unfitted'}")
-st.sidebar.text(f"Saved Metrics: {'Available' if metrics_data else 'None'}")
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("**Teacher Defense Reference**")
-st.sidebar.markdown("""
-<div style="font-size: 0.80rem; color: #cbd5e1; line-height: 1.4;">
-The full mathematical derivations, negative selection algorithms, and biological analogies are formally documented in <code>README.md</code>.
-</div>
-""", unsafe_allow_html=True)
-
-
 # Header
 st.markdown('<div class="academic-title">Artificial Immune System Network Intrusion Detection Benchmark</div>', unsafe_allow_html=True)
 st.markdown('<div class="academic-subtitle">Comparative evaluation of a custom Negative Selection and Clonal Selection Hybrid AIS against Random Forest on the NSL-KDD benchmark dataset.</div>', unsafe_allow_html=True)
 
+# System state strip (replaces sidebar status)
+col_s1, col_s2, col_s3, col_s4, col_s5 = st.columns(5)
+col_s1.caption(f"Preprocessor: **{'Loaded' if preprocessor else 'Unfitted'}**")
+col_s2.caption(f"Hybrid AIS: **{'Loaded' if ais_model else 'Unfitted'}**")
+col_s3.caption(f"Random Forest: **{'Loaded' if rf_model else 'Unfitted'}**")
+col_s4.caption(f"Saved Metrics: **{'Available' if metrics_data else 'None'}**")
+col_s5.caption("Docs: **README.md**")
+
+st.markdown("---")
+
+# Tab layout — no sidebar
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "Experimental Benchmarks",
+    "Live Packet Inspector",
+    "Dataset Specification",
+    "Train Models",
+    "LaTeX Table Exporter",
+    "Legal",
+    "Deployment",
+])
+
 
 # ==============================================================================
-# PAGE 1: EXPERIMENTAL BENCHMARKS (TEACHER WALKTHROUGH)
+# TAB 1: EXPERIMENTAL BENCHMARKS
 # ==============================================================================
-if selected_page == "Experimental Benchmarks":
+with tab1:
     st.markdown('<div class="section-header">Experimental Context & Setup</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="explanation-callout">
@@ -352,9 +362,9 @@ if selected_page == "Experimental Benchmarks":
         st.markdown("""
         <div class="explanation-callout">
             <strong>Key Insights for Teacher / Oral Defense:</strong><br>
-            • <strong>Why did the AIS achieve 0.0000 False Alarms?</strong> Negative Selection rejects any candidate detector matching normal traffic within radius <code>r</code> during training. Then, Clonal Selection filters out any mutated clone that drifts into normal space. This mathematically guarantees zero false alarms on legitimate communications.<br>
-            • <strong>Why does Random Forest have higher Recall (62.03% vs 7.35%)?</strong> Random Forest constructs orthogonal decision tree splits that fit known training attack signatures closely. In contrast, the AIS models Non-Self space using spherical Euclidean distance clusters, which prioritize strict self-tolerance over aggressive boundary expansion in 115 dimensions.<br>
-            • <strong>Why is AIS throughput so high (>200,000 samples/s)?</strong> AIS distance calculations are implemented via chunked BLAS matrix multiplications, allowing instant Euclidean evaluation without GPU overhead.
+            &bull; <strong>Why did the AIS achieve 0.0000 False Alarms?</strong> Negative Selection rejects any candidate detector matching normal traffic within radius <code>r</code> during training. Then, Clonal Selection filters out any mutated clone that drifts into normal space. This mathematically guarantees zero false alarms on legitimate communications.<br>
+            &bull; <strong>Why does Random Forest have higher Recall (62.03% vs 7.35%)?</strong> Random Forest constructs orthogonal decision tree splits that fit known training attack signatures closely. In contrast, the AIS models Non-Self space using spherical Euclidean distance clusters, which prioritize strict self-tolerance over aggressive boundary expansion in 115 dimensions.<br>
+            &bull; <strong>Why is AIS throughput so high (&gt;200,000 samples/s)?</strong> AIS distance calculations are implemented via chunked BLAS matrix multiplications, allowing instant Euclidean evaluation without GPU overhead.
         </div>
         """, unsafe_allow_html=True)
 
@@ -366,10 +376,10 @@ if selected_page == "Experimental Benchmarks":
             plt.close(fig_cm)
             st.markdown("""
             <div style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.4;">
-                • <strong>Top-Left (TN):</strong> Normal traffic correctly recognized as Self and permitted.<br>
-                • <strong>Top-Right (FP):</strong> False alarms (normal traffic wrongly blocked) - <strong>0 for AIS</strong>.<br>
-                • <strong>Bottom-Left (FN):</strong> Attacks not matched by current detector radii (missed intrusions).<br>
-                • <strong>Bottom-Right (TP):</strong> Attacks correctly matched by mature detector centroids.
+                &bull; <strong>Top-Left (TN):</strong> Normal traffic correctly recognized as Self and permitted.<br>
+                &bull; <strong>Top-Right (FP):</strong> False alarms (normal traffic wrongly blocked) - <strong>0 for AIS</strong>.<br>
+                &bull; <strong>Bottom-Left (FN):</strong> Attacks not matched by current detector radii (missed intrusions).<br>
+                &bull; <strong>Bottom-Right (TP):</strong> Attacks correctly matched by mature detector centroids.
             </div>
             """, unsafe_allow_html=True)
 
@@ -416,24 +426,30 @@ if selected_page == "Experimental Benchmarks":
             st.markdown("""
             <div class="explanation-callout">
                 <strong>How Clonal Selection Matured the Repertoire:</strong><br>
-                • <strong>Left Plot:</strong> Shows detector affinity scores progressing across 8 generations. High-performing detectors are cloned proportionally, while mutation rates decrease as detectors achieve higher affinity.<br>
-                • <strong>Right Plot:</strong> Tracks the discrimination balance. Mutated detectors that invaded Self space were immediately censored, keeping False Positives at 0 while True Positives stabilized.
+                &bull; <strong>Left Plot:</strong> Shows detector affinity scores progressing across 8 generations. High-performing detectors are cloned proportionally, while mutation rates decrease as detectors achieve higher affinity.<br>
+                &bull; <strong>Right Plot:</strong> Tracks the discrimination balance. Mutated detectors that invaded Self space were immediately censored, keeping False Positives at 0 while True Positives stabilized.
             </div>
             """, unsafe_allow_html=True)
 
+        # Refresh button
+        if st.button("Reload Metrics from Disk"):
+            st.cache_data.clear()
+            st.rerun()
+
     else:
-        st.info("No saved metrics found. Please train models via the 'Algorithm Training Studio' tab or run 'python train.py'.")
+        st.info("No saved metrics found. Train models in the 'Train Models' tab or run: python train.py")
 
 
 # ==============================================================================
-# PAGE 2: SINGLE-PACKET INSPECTION (STEP-BY-STEP MATHEMATICAL WALKTHROUGH)
+# TAB 2: LIVE PACKET INSPECTOR
 # ==============================================================================
-elif selected_page == "Single-Packet Inspection":
-    st.markdown('<div class="section-header">Step-by-Step Packet Classification Walkthrough</div>', unsafe_allow_html=True)
+with tab2:
+    st.markdown('<div class="section-header">Live Step-by-Step Packet Classification</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="explanation-callout">
-        <strong>Demonstrating the AIS Mathematical Decision to a Teacher:</strong><br>
-        Select any real connection from the NSL-KDD test partition to trace the exact mathematical transformation: from raw packet attributes to normalized feature space, Euclidean distance computation, and threshold matching.
+        <strong>How this works:</strong> Select a real connection record from the NSL-KDD test partition. The system will
+        compute Euclidean distances from your chosen packet to every detector in the AIS repertoire in real time,
+        then apply the threshold decision rule and show you the full mathematical breakdown.
     </div>
     """, unsafe_allow_html=True)
 
@@ -453,11 +469,29 @@ elif selected_page == "Single-Packet Inspection":
             ground_truth_label = connection_row["label"].values[0]
             ground_truth_binary = connection_row["binary_label"].values[0]
 
-            X_vec = preprocessor.transform(connection_row)
-            dists = np.linalg.norm(ais_model.detectors_ - X_vec[0], axis=1)
+            # Live computation with spinner and progress
+            with st.spinner("Transforming features and computing Euclidean distances across detector repertoire..."):
+                X_vec = preprocessor.transform(connection_row)
+
+                n_detectors = len(ais_model.detectors_)
+                progress_bar = st.progress(0, text=f"Scanning 0 / {n_detectors} detectors...")
+
+                # Compute distances in chunks to show live progress
+                chunk = max(1, n_detectors // 10)
+                dists_all = []
+                for i in range(0, n_detectors, chunk):
+                    batch = ais_model.detectors_[i:i + chunk]
+                    dists_all.append(np.linalg.norm(batch - X_vec[0], axis=1))
+                    pct = min(int((i + chunk) / n_detectors * 100), 100)
+                    progress_bar.progress(pct, text=f"Scanning {min(i + chunk, n_detectors)} / {n_detectors} detectors...")
+                    time.sleep(0.03)
+
+                progress_bar.empty()
+                dists = np.concatenate(dists_all)
+
             min_dist = float(np.min(dists))
             radius = float(ais_model.matching_radius)
-            anomaly_score = float(np.exp(- (min_dist ** 2) / (2.0 * (radius ** 2))))
+            anomaly_score = float(np.exp(-(min_dist ** 2) / (2.0 * (radius ** 2))))
 
             ais_prediction = 1 if min_dist <= radius else 0
             rf_prediction = int(rf_model.predict(X_vec)[0]) if rf_model else None
@@ -516,6 +550,35 @@ elif selected_page == "Single-Packet Inspection":
                 </div>
                 """, unsafe_allow_html=True)
 
+            # Live distance histogram — 20 nearest detectors
+            st.markdown('<div class="section-header">Step 4: 20 Nearest Detector Distances (Live)</div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div style="font-size: 0.82rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 0.5rem;">
+                Each bar is the Euclidean distance from this packet to one detector. The red dashed line marks the matching radius <code>r</code>.
+                Any detector whose bar falls below <code>r</code> triggers a classification of ATTACK.
+            </div>
+            """, unsafe_allow_html=True)
+
+            nearest_20_idx = np.argsort(dists)[:20]
+            nearest_20_dists = dists[nearest_20_idx]
+
+            fig_live, ax_live = plt.subplots(figsize=(10, 3))
+            fig_live.patch.set_facecolor("#000000")
+            ax_live.set_facecolor("#0b0f19")
+            colors = ["#f87171" if d <= radius else "#38bdf8" for d in nearest_20_dists]
+            ax_live.bar(range(len(nearest_20_dists)), nearest_20_dists, color=colors, edgecolor="#334155")
+            ax_live.axhline(y=radius, color="#facc15", linestyle="--", linewidth=1.5, label=f"Matching radius r = {radius:.3f}")
+            ax_live.set_xlabel("Detector rank (nearest first)", color="#ffffff", fontsize=9)
+            ax_live.set_ylabel("Euclidean distance", color="#ffffff", fontsize=9)
+            ax_live.set_title("20 Nearest Detector Distances for Selected Packet", color="#ffffff", fontsize=10, fontweight="bold")
+            ax_live.tick_params(colors="#ffffff")
+            for spine in ax_live.spines.values():
+                spine.set_edgecolor("#334155")
+            ax_live.legend(facecolor="#0b0f19", edgecolor="#334155", labelcolor="#ffffff", fontsize=8)
+            plt.tight_layout()
+            st.pyplot(fig_live)
+            plt.close(fig_live)
+
             st.markdown('<div class="section-header">Raw Network Connection Feature Attributes (41 Features)</div>', unsafe_allow_html=True)
             raw_display = connection_row.drop(columns=["binary_label"], errors="ignore")
             st.dataframe(raw_display.T.rename(columns={selected_idx: "Attribute Value"}), use_container_width=True)
@@ -523,13 +586,13 @@ elif selected_page == "Single-Packet Inspection":
         else:
             st.error("Test data file not located at data/raw/KDDTest+.txt.")
     else:
-        st.warning("Models not loaded. Train models first to enable packet inspection.")
+        st.warning("Models not loaded. Train models first (use the 'Train Models' tab or run: python train.py).")
 
 
 # ==============================================================================
-# PAGE 3: DATASET SPECIFICATION
+# TAB 3: DATASET SPECIFICATION
 # ==============================================================================
-elif selected_page == "Dataset Specification":
+with tab3:
     st.markdown('<div class="section-header">NSL-KDD Dataset Specification & Class Distribution</div>', unsafe_allow_html=True)
 
     df_sample = get_dataset_sample(15000)
@@ -572,16 +635,16 @@ elif selected_page == "Dataset Specification":
 
 
 # ==============================================================================
-# PAGE 4: ALGORITHM TRAINING STUDIO
+# TAB 4: ALGORITHM TRAINING STUDIO
 # ==============================================================================
-elif selected_page == "Algorithm Training Studio":
+with tab4:
     st.markdown('<div class="section-header">Model Hyperparameter Configuration & Execution</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="explanation-callout">
         <strong>Training Configuration Guide:</strong><br>
-        • <strong>Target Detector Count (K):</strong> Repertoire size. More detectors provide denser coverage of Non-Self space.<br>
-        • <strong>Matching Radius (r):</strong> Euclidean threshold. Smaller radius enforces stricter self-tolerance; larger radius increases attack detection rate.<br>
-        • <strong>Clonal Generations:</strong> Iterations of evolutionary affinity maturation and somatic hypermutation.
+        &bull; <strong>Target Detector Count (K):</strong> Repertoire size. More detectors provide denser coverage of Non-Self space.<br>
+        &bull; <strong>Matching Radius (r):</strong> Euclidean threshold. Smaller radius enforces stricter self-tolerance; larger radius increases attack detection rate.<br>
+        &bull; <strong>Clonal Generations:</strong> Iterations of evolutionary affinity maturation and somatic hypermutation.
     </div>
     """, unsafe_allow_html=True)
 
@@ -655,9 +718,9 @@ elif selected_page == "Algorithm Training Studio":
 
 
 # ==============================================================================
-# PAGE 5: RESEARCH PAPER TABLE EXPORTER
+# TAB 5: RESEARCH PAPER TABLE EXPORTER
 # ==============================================================================
-elif selected_page == "Research Paper Table Exporter":
+with tab5:
     st.markdown('<div class="section-header">Research Paper LaTeX Table Exporter</div>', unsafe_allow_html=True)
     st.markdown("Copy-ready LaTeX code formatted for academic papers (IEEE / ACM / Springer standard).")
 
@@ -704,9 +767,9 @@ Throughput (samples/s) & {ais_m['throughput_samples_per_sec']:,.0f} & {rf_m['thr
 
 
 # ==============================================================================
-# PAGE 6: TERMS OF USE & PRIVACY POLICY
+# TAB 6: LEGAL
 # ==============================================================================
-elif selected_page == "Terms of Use & Privacy Policy":
+with tab6:
     st.markdown('<div class="section-header">Privacy Policy & Terms of Use</div>', unsafe_allow_html=True)
 
     st.markdown("### Privacy Policy")
@@ -736,9 +799,9 @@ elif selected_page == "Terms of Use & Privacy Policy":
 
 
 # ==============================================================================
-# PAGE 7: DEPLOYMENT & CUSTOM DOMAIN
+# TAB 7: DEPLOYMENT
 # ==============================================================================
-elif selected_page == "Deployment & Custom Domain":
+with tab7:
     st.markdown('<div class="section-header">Production Deployment & Custom Domain Configuration</div>', unsafe_allow_html=True)
     st.markdown("Standard procedure for binding this dashboard to a custom institutional domain and securing it behind an Nginx reverse proxy.")
 
