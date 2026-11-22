@@ -28,8 +28,12 @@ wheels/
 .coverage
 htmlcov/
 
-# Streamlit
-.streamlit/
+# Streamlit (track config.toml for black/white theme, ignore runtime cache)
+.streamlit/*
+!.streamlit/config.toml
+
+# Matplotlib cache
+results/.mpl_cache/
 
 # OS specific
 .DS_Store
