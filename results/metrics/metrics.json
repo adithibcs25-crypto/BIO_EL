@@ -1,0 +1,62 @@
+[
+    {
+        "model_name": "Hybrid AIS",
+        "accuracy": 0.473,
+        "precision": 1.0,
+        "recall": 0.07348804500703235,
+        "f1_score": 0.13691451031772028,
+        "specificity": 1.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.9265119549929677,
+        "mcc": 0.18185265241849796,
+        "roc_auc": 0.7001296059275264,
+        "true_negatives": 2156,
+        "false_positives": 0,
+        "false_negatives": 2635,
+        "true_positives": 209,
+        "confusion_matrix": [
+            [
+                2156,
+                0
+            ],
+            [
+                2635,
+                209
+            ]
+        ],
+        "training_time_sec": 8.774001999991015,
+        "prediction_time_sec": 0.030805899994447827,
+        "throughput_samples_per_sec": 162306.57117309197,
+        "total_test_samples": 5000
+    },
+    {
+        "model_name": "Random Forest",
+        "accuracy": 0.771,
+        "precision": 0.9644614543466375,
+        "recall": 0.620253164556962,
+        "f1_score": 0.754975390541408,
+        "specificity": 0.9698515769944341,
+        "false_positive_rate": 0.030148423005565864,
+        "false_negative_rate": 0.379746835443038,
+        "mcc": 0.6067549174868455,
+        "roc_auc": 0.9554585835101206,
+        "true_negatives": 2091,
+        "false_positives": 65,
+        "false_negatives": 1080,
+        "true_positives": 1764,
+        "confusion_matrix": [
+            [
+                2091,
+                65
+            ],
+            [
+                1080,
+                1764
+            ]
+        ],
+        "training_time_sec": 0.9607986999908462,
+        "prediction_time_sec": 0.06541239999933168,
+        "throughput_samples_per_sec": 76438.10653715633,
+        "total_test_samples": 5000
+    }
+]
