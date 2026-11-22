@@ -721,8 +721,13 @@ with tab4:
 # TAB 5: RESEARCH PAPER TABLE EXPORTER
 # ==============================================================================
 with tab5:
-    st.markdown('<div class="section-header">Research Paper LaTeX Table Exporter</div>', unsafe_allow_html=True)
-    st.markdown("Copy-ready LaTeX code formatted for academic papers (IEEE / ACM / Springer standard).")
+    st.markdown('<div class="section-header">Auto-Generated Research Table</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="explanation-callout">
+        This is a ready-to-paste LaTeX table of all measured results, formatted for IEEE / Springer research papers.
+        Every number here is computed from the actual trained models — nothing is fabricated.
+    </div>
+    """, unsafe_allow_html=True)
 
     if metrics_data:
         ais_m = next((m for m in metrics_data if m["model_name"] == "Hybrid AIS"), None)
@@ -762,39 +767,30 @@ Throughput (samples/s) & {ais_m['throughput_samples_per_sec']:,.0f} & {rf_m['thr
 \\end{{table}}"""
 
             st.code(latex_code, language="latex")
+            st.caption("Copy the block above and paste it directly into any LaTeX editor (Overleaf, TeXstudio).")
     else:
-        st.info("No saved metrics found. Train models first to populate the research table.")
+        st.info("No saved metrics found. Train models first (Train Models tab or: python train.py).")
 
 
 # ==============================================================================
 # TAB 6: LEGAL
 # ==============================================================================
 with tab6:
-    st.markdown('<div class="section-header">Privacy Policy & Terms of Use</div>', unsafe_allow_html=True)
-
-    st.markdown("### Privacy Policy")
+    st.markdown('<div class="section-header">Terms of Use & Privacy</div>', unsafe_allow_html=True)
     st.markdown("""
-    **Last Updated:** November 2026
+    **Academic Use Only.**
+    This dashboard is built for university coursework evaluation and algorithm research.
+    It runs entirely on your local machine — no data is sent to any external server.
 
-    **1. Scope and Research Context**
-    This application and the associated software tools are developed strictly for academic, research, and non-commercial network intrusion detection benchmarking. The project operates locally on pre-sanitized benchmark datasets (NSL-KDD).
+    The NSL-KDD dataset used here contains anonymized, synthetic network connection records with no
+    Personally Identifiable Information (PII). All model training, evaluation, and inference happens
+    offline on your own hardware.
 
-    **2. Telemetry and Data Processing**
-    - **No External Exfiltration**: All network feature extraction, preprocessing, model fitting, and evaluation routines execute strictly on local compute resources. No network connection parameters, packet attributes, or telemetry data are transmitted to external cloud endpoints.
-    - **No PII Ingestion**: The NSL-KDD dataset contains synthetic and anonymized connection metadata without Personally Identifiable Information (PII) or raw application payloads.
-    - **Local Session State**: Any user-entered connection attributes within the live testing inspector remain in memory during the active browser session and are discarded upon termination.
-    """)
+    The Hybrid AIS is a computational abstraction of biological immune system principles.
+    It is not intended for deployment in production network security infrastructure without
+    additional engineering controls.
 
-    st.markdown("### Terms and Conditions")
-    st.markdown("""
-    **1. Permitted Use**
-    This software is provided for academic research, university coursework evaluation, algorithm analysis, and educational demonstration.
-
-    **2. Algorithmic Integrity & Disclaimers**
-    The Hybrid Artificial Immune System (incorporating Negative Selection and Clonal Selection) is an algorithmic and computational abstraction. The system does not guarantee prevention of zero-day attacks in high-throughput enterprise infrastructure without perimeter security controls.
-
-    **3. Intellectual Property**
-    The codebase, mathematical derivations, and documentation are provided open-source under standard academic fair-use guidelines.
+    Source code is open for academic review under standard fair-use guidelines.
     """)
 
 
@@ -802,61 +798,32 @@ with tab6:
 # TAB 7: DEPLOYMENT
 # ==============================================================================
 with tab7:
-    st.markdown('<div class="section-header">Production Deployment & Custom Domain Configuration</div>', unsafe_allow_html=True)
-    st.markdown("Standard procedure for binding this dashboard to a custom institutional domain and securing it behind an Nginx reverse proxy.")
-
-    st.markdown("#### Step 1: DNS Configuration")
+    st.markdown('<div class="section-header">How to Run This Project</div>', unsafe_allow_html=True)
     st.markdown("""
-    Create an `A` record or `CNAME` record in your DNS provider management console (e.g., Cloudflare, Route53, Namecheap):
-    ```text
-    Type:  A
-    Name:  nids-bench.yourdomain.edu (or @ for root domain)
-    Value: <YOUR_SERVER_PUBLIC_IPV4_ADDRESS>
-    TTL:   Auto / 300s
-    ```
-    """)
+    <div class="explanation-callout">
+        Everything needed to reproduce this project is in the GitHub repository.
+        The dataset, trained models, and results are all included.
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("#### Step 2: Systemd Service Unit")
+    st.markdown("#### Clone and install")
+    st.code("""git clone https://github.com/adithibcs25-crypto/BIO_EL.git
+cd BIO_EL/Bio_EL_Intrusion_Detection
+pip install -r requirements.txt""", language="bash")
+
+    st.markdown("#### Run the dashboard")
+    st.code("streamlit run app.py", language="bash")
+
+    st.markdown("#### Re-train models from scratch (optional)")
+    st.code("python train.py", language="bash")
+
+    st.markdown("#### Run tests")
+    st.code("python -m pytest tests/", language="bash")
+
     st.markdown("""
-    Deploy Streamlit as a managed daemon on your Linux host:
-    `/etc/systemd/system/ais-nids.service`:
-    ```ini
-    [Unit]
-    Description=AIS Network Intrusion Detection Dashboard
-    After=network.target
-
-    [Service]
-    User=ubuntu
-    WorkingDirectory=/var/www/Bio_EL_Intrusion_Detection
-    ExecStart=/var/www/Bio_EL_Intrusion_Detection/venv/bin/streamlit run app.py --server.port 8501 --server.headless true
-    Restart=always
-
-    [Install]
-    WantedBy=multi-user.target
-    ```
-    """)
-
-    st.markdown("#### Step 3: Nginx Reverse Proxy with TLS/SSL")
-    st.markdown("""
-    Configure Nginx at `/etc/nginx/sites-available/ais-nids`:
-    ```nginx
-    server {
-        listen 80;
-        server_name nids-bench.yourdomain.edu;
-
-        location / {
-            proxy_pass http://127.0.0.1:8501;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-    }
-    ```
-    Enable TLS via Certbot:
-    ```bash
-    sudo certbot --nginx -d nids-bench.yourdomain.edu
-    ```
-    """)
+    <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 1rem;">
+        Dataset files (KDDTrain+.txt and KDDTest+.txt) are already in <code>data/raw/</code>.
+        Pre-trained model files are already in <code>models/</code>.
+        No internet connection required to run locally.
+    </div>
+    """, unsafe_allow_html=True)
