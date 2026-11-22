@@ -532,21 +532,39 @@ with tab2:
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.markdown('<div class="section-header">Step 3: Mathematical Decision Formulation</div>', unsafe_allow_html=True)
-            st.latex(r"d_{min} = \min_{d \in D^*} \|x - d\|_2 = " + f"{min_dist:.4f}")
-            st.latex(r"f(x) = \begin{cases} 1 & \text{if } d_{min} \le r \quad (" + f"{min_dist:.4f} " + r"\le" + f" {radius:.4f}" + r") \\ 0 & \text{otherwise} \end{cases} \implies \hat{y}_{AIS} = " + str(ais_prediction))
-            st.latex(r"S(x) = \exp\left(-\frac{d_{min}^2}{2 r^2}\right) = " + f"{anomaly_score:.4f}")
+            st.markdown('<div class="section-header">Step 3: How the Decision Was Made</div>', unsafe_allow_html=True)
 
-            if min_dist <= radius:
+            verdict_color = "#f87171" if ais_prediction == 1 else "#4ade80"
+            verdict_word = "ATTACK" if ais_prediction == 1 else "NORMAL"
+            dist_vs_radius = "closer than" if min_dist <= radius else "farther than"
+            st.markdown(f"""
+            <div class="explanation-callout">
+                The system measured how far this packet is from the nearest trained detector.
+                <br><br>
+                <strong>Nearest detector distance:</strong> &nbsp;<code>{min_dist:.4f}</code>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <strong>Detection threshold:</strong> &nbsp;<code>{radius:.4f}</code>
+                <br><br>
+                This packet is <strong>{dist_vs_radius} the threshold</strong>, so the AIS classified it as
+                <strong style="color: {verdict_color};">{verdict_word}</strong>.
+                <br><br>
+                <strong>Anomaly confidence score:</strong> &nbsp;<code>{anomaly_score:.4f}</code>
+                &nbsp; (0 = definitely normal, 1 = definitely attack)
+            </div>
+            """, unsafe_allow_html=True)
+
+            if ais_prediction == 1:
                 st.markdown("""
                 <div class="explanation-callout">
-                    <strong>Interpretation:</strong> The incoming connection falls <strong>within the matching radius</strong> of at least one mature Non-Self detector ($d_{min} \\le r$). The packet is classified as an <strong>Intrusion Attack</strong> with confidence score $S(x)$.
+                    <strong>What this means:</strong> At least one of our trained detectors recognised this packet as suspicious.
+                    The packet is close enough to known attack patterns that the system flagged it as an intrusion.
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
                 <div class="explanation-callout">
-                    <strong>Interpretation:</strong> The incoming connection falls <strong>outside all Non-Self detector perimeters</strong> ($d_{min} > r$). Due to self-tolerance, the packet is tolerated and classified as <strong>Normal Traffic</strong>.
+                    <strong>What this means:</strong> This packet did not match any detector closely enough to trigger an alert.
+                    The system treated it as normal traffic and let it through — consistent with how the immune system tolerates "self" cells.
                 </div>
                 """, unsafe_allow_html=True)
 

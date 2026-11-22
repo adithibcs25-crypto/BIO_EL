@@ -119,7 +119,7 @@ $$
 
 ---
 
-## 3. Comprehensive Performance Metrics (Research Paper Standard)
+## 3. Comprehensive Performance Metrics 
 
 The following metrics are tracked and exported to `results/metrics/metrics.json` and `results/metrics/metrics.csv`:
 
